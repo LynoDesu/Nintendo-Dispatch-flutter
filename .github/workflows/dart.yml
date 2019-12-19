@@ -15,7 +15,7 @@ jobs:
     - name: Install dependencies
       uses: steebchen/flutter@v1.0.0
       with:
-        args: flutter pub get
+        args: pub get
 
 
     - name: run tests
