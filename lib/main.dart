@@ -8,6 +8,8 @@ import 'package:http/http.dart' as http;
 import 'package:nintendo_dispatch/models/dispatch_feed.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'widgets/episode_detail.dart';
+
 void main() => runApp(MyApp());
 
 DispatchModel _dispatchModel;
@@ -17,7 +19,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Nintendo Dispatch',
+        title: 'Dispatch Podcast',
         theme: ThemeData(
           // This is the theme of your application.
           //
@@ -30,7 +32,8 @@ class MyApp extends StatelessWidget {
           // is not restarted.
           primarySwatch: Colors.red,
         ),
-        home: MyHomePage(title: 'Nintendo Dispatch', model: DispatchModel()),
+        debugShowCheckedModeBanner: false,
+        home: MyHomePage(title: 'Dispatch Podcast', model: DispatchModel()),
     );
   }
 }
@@ -85,15 +88,14 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 
  void _updateModel() {
     setState(() {
-      // Cause the clock to rebuild when the model changes.
+      // Cause the UI to rebuild when the model changes.
     });
   }
 
   @override
   Widget build(BuildContext context) {
 
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
+    // This method is rerun every time setState is called.
     //
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
@@ -169,24 +171,23 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     Widget tabWidget;
     switch (tab.text) {
       case "Podcasts":
-          if (widget.model.episodesCount == 0) {
-            tabWidget = Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                CircularProgressIndicator()
-              ]);
-          }
-          else
-          {
-            tabWidget = buildPodcasts();
-          }
+        var children = <Widget>[];
+        if (_dispatchModel.episodesCount > 0) {
+          children.add(buildPodcasts());
+        }
+        else
+        {
+          children.add(Center(child: CircularProgressIndicator()));
+        }
+        tabWidget = Stack(
+          children: children
+        );
         break;
       case "Articles":
-        tabWidget = Text("Hi");
+        tabWidget = Center(child: Text("Coming Soon!", textScaleFactor: 2));
         break;
       case "Reviews":
-        tabWidget = Text("Hi");
+        tabWidget = Center(child: Text("Coming Soon!", textScaleFactor: 2));
         break;
     }
 
@@ -207,13 +208,18 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
   }
 
   Widget _buildRow(Episode episode) {
-    return ListTile(
-      title: Text(
-        episode.title,
-        style: TextStyle(fontWeight: FontWeight.bold),
+    return GestureDetector(
+      onTap: () {Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => EpisodeDetail(episode)));},
+      child: ListTile(
+        title: Text(
+          episode.title,
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        leading: Icon(Icons.music_video, color: Colors.redAccent),
+        trailing: Icon(_dispatchModel.playedEpisodes.contains(episode) ? Icons.play_circle_filled : Icons.play_circle_outline, color: Colors.teal[400]),
       ),
-      leading: Icon(Icons.music_video, color: Colors.redAccent),
-      trailing: Icon(_dispatchModel.playedEpisodes.contains(episode) ? Icons.play_circle_filled : Icons.play_circle_outline, color: Colors.teal[400]),
     );
   }
 }
