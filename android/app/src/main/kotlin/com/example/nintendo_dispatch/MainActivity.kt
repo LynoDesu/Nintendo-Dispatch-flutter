@@ -1,4 +1,4 @@
-package com.example.nintendo_dispatch
+package tech.limitbreak.nintendo_dispatch
 
 import androidx.annotation.NonNull;
 import io.flutter.embedding.android.FlutterActivity
