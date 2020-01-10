@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:nintendo_dispatch/models/articles.dart';
 
 class ArticleDetail extends StatelessWidget {
@@ -26,7 +26,7 @@ class ArticleDetail extends StatelessWidget {
               image:_article.getHeaderImage()),
             Center(child: Text(_article.title,
               textAlign: TextAlign.center, textScaleFactor: 1.6)),
-            HtmlWidget(_article.content, webView: true, webViewJs: false)
+              Html(data: _article.content, padding: EdgeInsets.all(10.0))
           ],
         ),
       )
