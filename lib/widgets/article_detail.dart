@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:nintendo_dispatch/models/dispatch_feed.dart';
-import 'package:nintendo_dispatch/widgets/player_widget.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:nintendo_dispatch/models/articles.dart';
 
-class EpisodeDetail extends StatelessWidget {
-  Episode _episode;
+class ArticleDetail extends StatelessWidget {
+  Article _article;
 
-  EpisodeDetail(Episode episode){
-    _episode = episode;
+  ArticleDetail(Article article){
+    _article = article;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Episode Details"),
+        title: Text("Article Details"),
       ),
       body: SingleChildScrollView(
         child: Wrap(
@@ -23,12 +23,10 @@ class EpisodeDetail extends StatelessWidget {
           children: [ 
             FadeInImage.assetNetwork(
               placeholder: "assets/placeholder.jpg",
-              image:_episode.getHeaderImage()),
-            Center(child: Text(_episode.title,
+              image:_article.getHeaderImage()),
+            Center(child: Text(_article.title,
               textAlign: TextAlign.center, textScaleFactor: 1.6)),
-            Text(_episode.summary,
-              textAlign: TextAlign.center),
-            PlayerWidget(url: _episode.attachmentUrl)
+            HtmlWidget(_article.content, webView: true, webViewJs: false)
           ],
         ),
       )

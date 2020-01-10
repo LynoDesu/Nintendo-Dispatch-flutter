@@ -1,11 +1,13 @@
 
-import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:nintendo_dispatch/models/articles.dart';
 import 'package:nintendo_dispatch/models/dispatch.dart';
 import 'package:http/http.dart' as http;
 import 'package:nintendo_dispatch/models/dispatch_feed.dart';
+import 'package:nintendo_dispatch/widgets/article_detail.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'widgets/episode_detail.dart';
@@ -74,8 +76,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     _dispatchModel = widget.model;
     
     _dispatchModel.addListener(_updateModel);
-    loadPodcastsFromFile();
-    fetchPodcasts();
+    getInitialData();
   }
 
  @override
@@ -124,14 +125,20 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 
   int _retries = 0;
 
-  Future<void> fetchPodcasts() async {
-    final response = await http.get("https://www.nintendodispatch.com/json");
+  Future fetchPodcasts() async {
+    final DateTime episodeFilter = _dispatchModel.episodesCount > 0 ?
+      _dispatchModel.episodes[0].publishedDate :
+      DateTime.parse("1900-01-01");
+
+    final response = await http.get("https://dispatch-functions.azurewebsites.net/api/Podcasts/List?dateFrom=$episodeFilter");
 
     if (response.statusCode == 200) {
       if (response.body.length > 0) {
-        final feed = DispatchFeed.fromJson(json.decode(response.body));
-        _dispatchModel.addEpisodes(feed.items);
-        savePodcastsToFile(response.body);
+        final episodes = episodeFromJson(response.body);
+        if (episodes.length > 0) {
+          _dispatchModel.addEpisodes(episodes);
+          savePodcastsToFile(episodeToJson(_dispatchModel.episodes));
+        }
       }
       else
       {
@@ -143,27 +150,76 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     }
   }
 
-  Future<void> loadPodcastsFromFile() async {
+  Future fetchArticles() async {
+    final DateTime episodeFilter = _dispatchModel.articleCount > 0 ?
+      _dispatchModel.articles[0].pubDate :
+      DateTime.parse("1900-01-01");
+
+    final response = await http.get("https://dispatch-functions.azurewebsites.net/api/Articles/List?dateFrom=$episodeFilter");
+
+    if (response.statusCode == 200) {
+      if (response.body.length > 0) {
+        final articles = articlesFromJson(response.body);
+        if (articles.length > 0) {
+          _dispatchModel.addArticles(articles);
+          saveArticlesToFile(articlesToJson(_dispatchModel.articles));
+        }
+      }
+      else
+      {
+        if (_retries < 10) {
+          _retries ++;
+          fetchArticles();
+        }
+      }
+    }
+  }
+
+  void getInitialData() async {
+    await loadPodcastsFromFile();
+    fetchPodcasts();
+
+    await loadArticlesFromFile();
+    fetchArticles();
+  }
+
+  Future loadPodcastsFromFile() async {
     try {
       final directory = await getApplicationDocumentsDirectory();
       final path = directory.path;
       final file = File("$path/episodeData.json");
       final data = await file.readAsString();
-      final feed = DispatchFeed.fromJson(json.decode(data));
-      _dispatchModel.addEpisodes(feed.items);
+      final feed = episodeFromJson(data);
+      _dispatchModel.addEpisodes(feed);
     } catch (e) {
-      final data = await DefaultAssetBundle.of(context).loadString("assets/episodeData.json");
-      final feed = DispatchFeed.fromJson(json.decode(data));
-      _dispatchModel.addEpisodes(feed.items);
-
-      await savePodcastsToFile(data);
+      log("Unable to load podcasts from file: $e");
     }
   }
 
-  Future<void> savePodcastsToFile(String json) async {
+  Future loadArticlesFromFile() async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final path = directory.path;
+      final file = File("$path/articleData.json");
+      final data = await file.readAsString();
+      final feed = articlesFromJson(data);
+      _dispatchModel.addArticles(feed);
+    } catch (e) {
+      log("Unable to load articles from file: $e");
+    }
+  }
+
+  Future savePodcastsToFile(String json) async {
     final directory = await getApplicationDocumentsDirectory();
     final path = directory.path;
     var file = File("$path/episodeData.json");
+    await file.writeAsString(json);
+  }
+
+  Future saveArticlesToFile(String json) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final path = directory.path;
+    var file = File("$path/articleData.json");
     await file.writeAsString(json);
   }
 
@@ -184,7 +240,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
         );
         break;
       case "Articles":
-        tabWidget = Center(child: Text("Coming Soon!", textScaleFactor: 2));
+        tabWidget = buildArticles();
         break;
       case "Reviews":
         tabWidget = Center(child: Text("Coming Soon!", textScaleFactor: 2));
@@ -219,6 +275,35 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
         ),
         leading: Icon(Icons.music_video, color: Colors.redAccent),
         trailing: Icon(_dispatchModel.playedEpisodes.contains(episode) ? Icons.play_circle_filled : Icons.play_circle_outline, color: Colors.teal[400]),
+      ),
+    );
+  }
+
+  Widget buildArticles() {
+    return new ListView.builder(
+      itemCount: _dispatchModel.articleCount * 2,
+      padding: const EdgeInsets.all(16.0),
+      itemBuilder: (context, i) {
+        if (i.isOdd) return Divider();
+
+        final index = i ~/ 2;
+        return _buildArticleRow(_dispatchModel.articles[index]);
+      }
+    );
+  }
+
+  Widget _buildArticleRow(Article article) {
+    return GestureDetector(
+      onTap: () {Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => ArticleDetail(article)));},
+      child: ListTile(
+        title: Text(
+          article.title,
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        leading: Icon(Icons.gamepad, color: Colors.redAccent),
+        trailing: Icon(Icons.description, color: Colors.teal[400]),
       ),
     );
   }

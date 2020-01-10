@@ -1,0 +1,11 @@
+{
+    "bindings": [
+      {
+        "type": "table",
+        "direction": "out",
+        "name": "episodeTable",
+        "tableName": "episodes",
+        "connection": "MY_STORAGE_ACCT_APP_SETTING"
+      }
+    ]
+  }
