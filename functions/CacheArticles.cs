@@ -16,7 +16,7 @@ namespace NintendoDispatch.Functions
     {
         [FunctionName("CacheArticles")]
         public static async Task Run(
-            [TimerTrigger("0 */1 * * * *")]TimerInfo myTimer,
+            [TimerTrigger("0 0 */1 * * *")]TimerInfo myTimer,
             ILogger log,
             [Table("articles", Connection = "MY_STORAGE_ACCT_APP_SETTING")]IAsyncCollector<Article> articleTable,
             [Table("articles", "Default", Connection = "MY_STORAGE_ACCT_APP_SETTING")]CloudTable tableQuery)

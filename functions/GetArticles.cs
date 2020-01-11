@@ -22,7 +22,7 @@ namespace NintendoDispatch.Functions
             ILogger log,
             [Table("articles", "Default", Connection = "MY_STORAGE_ACCT_APP_SETTING")]CloudTable tableQuery)
         {
-            log.LogInformation("Starting GetPodcasts function");
+            log.LogInformation("Starting GetArticles function");
 
             string dateFrom = req.Query["dateFrom"];
 

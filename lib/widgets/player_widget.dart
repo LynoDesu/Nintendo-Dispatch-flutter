@@ -137,8 +137,8 @@ class _PlayerWidgetState extends State<PlayerWidget> {
         // set at least title to see the notification bar on ios.
         _audioPlayer.setNotification(
             title: 'Nintendo Dispatch',
-            artist: '',
-            albumTitle: '',
+            artist: 'Nintendo Dispatch',
+            albumTitle: 'Nintendo Dispatch',
             imageUrl: 'https://assets.fireside.fm/file/fireside-images/podcasts/images/b/bd6e0af5-b1d6-4783-9506-d534cfbae69e/cover_small.jpg',
             forwardSkipInterval: const Duration(seconds: 30), // default is 30s
             backwardSkipInterval: const Duration(seconds: 30), // default is 30s

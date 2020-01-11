@@ -63,8 +63,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 
   final List<Tab> myTabs = <Tab>[
     Tab(text: "Podcasts",),
-    Tab(text: 'Articles'),
-    Tab(text: 'Reviews'),
+    Tab(text: 'Articles')
   ];
 
   TabController _tabController;

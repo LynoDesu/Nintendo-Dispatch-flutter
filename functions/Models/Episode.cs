@@ -18,7 +18,6 @@ namespace NintendoDispatch.Models
             PublishedDate = item.DatePublished;
             Title = item.Title;
             Url = item.Url.AbsoluteUri;
-            Content = item.ContentText;
             Summary = item.Summary;
 
             if (item.Attachments?.Any() == true)
