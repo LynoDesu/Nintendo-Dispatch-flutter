@@ -23,15 +23,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
         title: 'Dispatch Podcast',
         theme: ThemeData(
-          // This is the theme of your application.
-          //
-          // Try running your application with "flutter run". You'll see the
-          // application has a blue toolbar. Then, without quitting the app, try
-          // changing the primarySwatch below to Colors.green and then invoke
-          // "hot reload" (press "r" in the console where you ran "flutter run",
-          // or simply save your changes to "hot reload" in a Flutter IDE).
-          // Notice that the counter didn't reset back to zero; the application
-          // is not restarted.
+          brightness: Brightness.light,
+          primarySwatch: Colors.red,
+          backgroundColor: Colors.grey.shade200
+        ),
+        darkTheme: ThemeData(
+          brightness: Brightness.dark,
           primarySwatch: Colors.red,
         ),
         debugShowCheckedModeBanner: false,
@@ -59,11 +56,11 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin {
+class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
 
   final List<Tab> myTabs = <Tab>[
-    Tab(text: "Podcasts",),
-    Tab(text: 'Articles')
+    Tab(text: "Podcasts", icon: Icon(Icons.music_video, color: Colors.white)),
+    Tab(text: 'Articles', icon: Icon(Icons.note, color: Colors.white))
   ];
 
   TabController _tabController;
@@ -71,6 +68,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(vsync: this, length: myTabs.length);
     _dispatchModel = widget.model;
     
@@ -80,6 +78,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 
  @override
  void dispose() {
+   WidgetsBinding.instance.removeObserver(this);
    _tabController.dispose();
    _dispatchModel.removeListener(_updateModel);
    _dispatchModel.dispose();
@@ -90,6 +89,11 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     setState(() {
       // Cause the UI to rebuild when the model changes.
     });
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    _updateModel();
   }
 
   @override
@@ -128,24 +132,27 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     final DateTime episodeFilter = _dispatchModel.episodesCount > 0 ?
       _dispatchModel.episodes[0].publishedDate :
       DateTime.parse("1900-01-01");
+    try {
+      final response = await http.get("https://dispatch-functions.azurewebsites.net/api/Podcasts/List?dateFrom=$episodeFilter");
 
-    final response = await http.get("https://dispatch-functions.azurewebsites.net/api/Podcasts/List?dateFrom=$episodeFilter");
-
-    if (response.statusCode == 200) {
-      if (response.body.length > 0) {
-        final episodes = episodeFromJson(response.body);
-        if (episodes.length > 0) {
-          _dispatchModel.addEpisodes(episodes);
-          savePodcastsToFile(episodeToJson(_dispatchModel.episodes));
+      if (response.statusCode == 200) {
+        if (response.body.length > 0) {
+          final episodes = episodeFromJson(response.body);
+          if (episodes.length > 0) {
+            _dispatchModel.addEpisodes(episodes);
+            savePodcastsToFile(episodeToJson(_dispatchModel.episodes));
+          }
+        }
+        else
+        {
+          if (_retries < 10) {
+            _retries ++;
+            fetchPodcasts();
+          }
         }
       }
-      else
-      {
-        if (_retries < 10) {
-          _retries ++;
-          fetchPodcasts();
-        }
-      }
+    } catch (e) {
+      log("Error fetching podcasts: $e");
     }
   }
 
@@ -153,25 +160,29 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     final DateTime episodeFilter = _dispatchModel.articleCount > 0 ?
       _dispatchModel.articles[0].pubDate :
       DateTime.parse("1900-01-01");
+    try {
+      final response = await http.get("https://dispatch-functions.azurewebsites.net/api/Articles/List?dateFrom=$episodeFilter");
 
-    final response = await http.get("https://dispatch-functions.azurewebsites.net/api/Articles/List?dateFrom=$episodeFilter");
-
-    if (response.statusCode == 200) {
-      if (response.body.length > 0) {
-        final articles = articlesFromJson(response.body);
-        if (articles.length > 0) {
-          _dispatchModel.addArticles(articles);
-          saveArticlesToFile(articlesToJson(_dispatchModel.articles));
+      if (response.statusCode == 200) {
+        if (response.body.length > 0) {
+          final articles = articlesFromJson(response.body);
+          if (articles.length > 0) {
+            _dispatchModel.addArticles(articles);
+            saveArticlesToFile(articlesToJson(_dispatchModel.articles));
+          }
+        }
+        else
+        {
+          if (_retries < 10) {
+            _retries ++;
+            fetchArticles();
+          }
         }
       }
-      else
-      {
-        if (_retries < 10) {
-          _retries ++;
-          fetchArticles();
-        }
-      }
+    } catch (e) {
+      log("Error fetching articles: $e");
     }
+    
   }
 
   void getInitialData() async {
@@ -269,9 +280,9 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
         MaterialPageRoute(builder: (context) => EpisodeDetail(episode)));},
       child: ListTile(
         title: Text(
-          episode.title,
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+            episode.title,
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
         leading: Icon(Icons.music_video, color: Colors.redAccent),
         trailing: Icon(_dispatchModel.playedEpisodes.contains(episode) ? Icons.play_circle_filled : Icons.play_circle_outline, color: Colors.teal[400]),
       ),
@@ -279,15 +290,15 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
   }
 
   Widget buildArticles() {
-    return new ListView.builder(
-      itemCount: _dispatchModel.articleCount * 2,
-      padding: const EdgeInsets.all(16.0),
-      itemBuilder: (context, i) {
-        if (i.isOdd) return Divider();
-
-        final index = i ~/ 2;
-        return _buildArticleRow(_dispatchModel.articles[index]);
-      }
+    return new Container(
+      color: Theme.of(context).backgroundColor,
+      child: ListView.builder(
+        itemCount: _dispatchModel.articleCount,
+        padding: const EdgeInsets.all(12.0),
+        itemBuilder: (context, i) {
+          return _buildArticleRow(_dispatchModel.articles[i]);
+        }
+      )
     );
   }
 
@@ -296,14 +307,32 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
       onTap: () {Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => ArticleDetail(article)));},
-      child: ListTile(
-        title: Text(
-          article.title,
-          style: TextStyle(fontWeight: FontWeight.bold),
+      child: Card(
+        margin: EdgeInsets.fromLTRB(3, 2, 3, 10),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ListTile(
+              leading: Icon(Icons.gamepad, color: Colors.redAccent),
+              title: Text(article.title,
+                style: TextStyle(fontWeight: FontWeight.bold)
+              )
+            ),
+            FadeInImage.assetNetwork(
+              placeholder: "assets/placeholder.jpg",
+              image:article.getHeaderImage(),
+              height: 125,
+              width: 1000,
+              fit: BoxFit.cover,
+              alignment: Alignment.center
+            ),
+            Container(
+              margin: EdgeInsets.fromLTRB(8, 8, 8, 0),
+              child: Text(article.description),
+            )
+          ]
         ),
-        leading: Icon(Icons.gamepad, color: Colors.redAccent),
-        trailing: Icon(Icons.description, color: Colors.teal[400]),
-      ),
+      )
     );
   }
 }

@@ -23,16 +23,18 @@ class ArticleDetail extends StatelessWidget {
           alignment: WrapAlignment.center,
           spacing: 20,
           runSpacing: 20,
-          children: [ 
+          children: [
             FadeInImage.assetNetwork(
               placeholder: "assets/placeholder.jpg",
               image:_article.getHeaderImage()),
             Center(child: Text(_article.title,
-              textAlign: TextAlign.center, textScaleFactor: 1.6)),
-              Html(data: _article.content, padding: EdgeInsets.all(10.0),
+              textAlign: TextAlign.center, textScaleFactor: 1.6)
+            ),
+            Html(data: _article.content, padding: EdgeInsets.all(10.0),
               onLinkTap: (url) {
                 _launchUrl(url);
-              })
+              }
+            )
           ],
         ),
       )
