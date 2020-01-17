@@ -1,12 +1,14 @@
 
 import 'package:flutter/material.dart';
-import 'package:nintendo_dispatch/models/dispatch.dart';
+import 'package:nintendo_dispatch/models/dispatch_model.dart';
 import 'package:nintendo_dispatch/widgets/homepage.dart';
 import 'package:provider/provider.dart';
 
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
+  GlobalKey<AnimatedListState> animatedListKey = GlobalKey<AnimatedListState>();
+
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -23,7 +25,7 @@ class MyApp extends StatelessWidget {
         ),
         debugShowCheckedModeBanner: false,
         home: ChangeNotifierProvider(
-          create: (_) => DispatchModel(),
+          create: (_) => DispatchModel(animatedListKey),
           child: MyHomePage(title: 'Dispatch Podcast'),
         )
     );

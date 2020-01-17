@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nintendo_dispatch/models/dispatch.dart';
+import 'package:nintendo_dispatch/models/dispatch_model.dart';
 import 'package:nintendo_dispatch/widgets/podcast_list.dart';
 import 'package:provider/provider.dart';
 
@@ -36,6 +36,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
+    
     WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(vsync: this, length: myTabs.length);
   }
@@ -72,7 +73,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
           // the App.build method, and use it to set our appbar title.
           title: Text(widget.title),
           actions: <Widget>[
-            IconButton(icon: Icon(Icons.refresh), onPressed: () => dispatchModel.fetchArticles()),
+            IconButton(icon: Icon(Icons.refresh), onPressed: () => dispatchModel.loadData()),
           ],
           bottom: TabBar(
             controller: _tabController,

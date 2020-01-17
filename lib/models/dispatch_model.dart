@@ -3,20 +3,31 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:nintendo_dispatch/models/dispatch_feed.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'articles.dart';
 
 class DispatchModel extends ChangeNotifier {
-  bool isLoading = false;
+  bool _isLoading = false;
+
+  bool get isLoading => _isLoading;
+
+  set isLoading(bool isLoading) {
+    _isLoading = isLoading;
+    notifyListeners();
+  }
+
+  GlobalKey<AnimatedListState> listKey;
 
   final List<Episode> _episodes = [];
   final List<String> _playedEpisodeIds = [];
   final List<Article> _articles = [];
 
-  DispatchModel(){
-    getInitialData();
+  DispatchModel(GlobalKey<AnimatedListState> animatedListKey){
+    listKey = animatedListKey;
+    loadData(loadFromFile: true);
   }
 
   List<Episode> get playedEpisodes => _playedEpisodeIds.map((id) => 
@@ -30,9 +41,15 @@ class DispatchModel extends ChangeNotifier {
 
   int get articleCount => _articles?.length;
 
-  void addEpisodes(List<Episode> episodes) {
+  void addEpisodes(List<Episode> episodes) async {
     if (episodes.length > 0) {
       _episodes.insertAll(0, episodes);
+      for (var i = 0; i < episodes.length * 2; i++) {
+        if (listKey.currentState != null) {
+          listKey.currentState.insertItem(i);
+          await Future.delayed(const Duration(milliseconds: 30));
+        }
+      }
       notifyListeners();
     }
   }
@@ -150,11 +167,29 @@ class DispatchModel extends ChangeNotifier {
     await file.writeAsString(json);
   }
 
-  void getInitialData() async {
-    await loadPodcastsFromFile();
-    fetchPodcasts();
+  void loadData({bool loadFromFile = false}) async {
+    isLoading = true;
 
-    await loadArticlesFromFile();
-    fetchArticles();
+    try {
+      if (loadFromFile) {
+        await loadPodcastsFromFile();
+      }
+      fetchPodcasts();
+
+      if (loadFromFile) {
+        await loadArticlesFromFile();
+      }
+      fetchArticles();
+
+      if (!loadFromFile) {
+        await Future.delayed(Duration(seconds: 1));
+      }
+    } catch (e) {
+      log("Error getting initial data: $e");
+    }
+    finally
+    {
+      isLoading = false;
+    }
   }
 }

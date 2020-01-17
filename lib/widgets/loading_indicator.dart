@@ -7,9 +7,9 @@ class LoadingIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Align(alignment: Alignment.topCenter, 
       child: ClipRRect(borderRadius: BorderRadius.circular(6), 
-        child: Container(
-          child: CircularProgressIndicator(), color: Colors.grey, padding: EdgeInsets.all(10),
-        ),
+        child: Container(color: Colors.grey, padding: EdgeInsets.all(10),
+          child: CircularProgressIndicator()
+        )
       ),
     );
   }

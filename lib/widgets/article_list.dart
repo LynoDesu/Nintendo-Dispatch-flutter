@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nintendo_dispatch/models/articles.dart';
-import 'package:nintendo_dispatch/models/dispatch.dart';
+import 'package:nintendo_dispatch/models/dispatch_model.dart';
 import 'package:provider/provider.dart';
 
 import 'article_detail.dart';
