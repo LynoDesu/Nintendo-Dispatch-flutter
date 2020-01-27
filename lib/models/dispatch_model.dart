@@ -75,7 +75,7 @@ class DispatchModel extends ChangeNotifier {
           final episodes = episodeFromJson(response.body);
           if (episodes.length > 0) {
             addEpisodes(episodes);
-            savePodcastsToFile(episodeToJson(episodes));
+            savePodcastsToFile(episodeToJson(_episodes));
           }
         }
         else
