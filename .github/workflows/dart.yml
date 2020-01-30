@@ -21,7 +21,7 @@ jobs:
           java-version: '12.x'
       #enable linux,macos,windows   and  web
       - run: flutter pub get
-      # build macOS desktop version
-      - run: flutter build ios
-      # build Android version
+      # build AOT version
+      - run: flutter build aot
+      # build Android app bundle version
       - run: flutter build appbundle
